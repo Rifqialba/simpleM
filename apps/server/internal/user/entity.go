@@ -7,6 +7,8 @@ type User struct {
 
 	Email string
 
+	PasswordHash string
+
 	Username string
 
 	DisplayName string

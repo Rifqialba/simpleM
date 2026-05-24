@@ -7,16 +7,23 @@ import (
 )
 
 type Handler struct {
-	service *Service
+	service    *Service
+	jwtSecret string
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(
+	service *Service,
+	jwtSecret string,
+) *Handler {
+
 	return &Handler{
-		service: service,
+		service:    service,
+		jwtSecret: jwtSecret,
 	}
 }
 
 func (h *Handler) Create(c *fiber.Ctx) error {
+
 	var req CreateUserRequest
 
 	if err := c.BodyParser(&req); err != nil {
@@ -54,6 +61,41 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	return response.Success(
 		c,
 		fiber.StatusCreated,
+		resp,
+	)
+}
+
+func (h *Handler) Login(c *fiber.Ctx) error {
+
+	var req LoginRequest
+
+	if err := c.BodyParser(&req); err != nil {
+
+		return response.Error(
+			c,
+			fiber.StatusBadRequest,
+			"invalid request body",
+		)
+	}
+
+	resp, err := h.service.Login(
+		c.Context(),
+		req,
+		h.jwtSecret,
+	)
+
+	if err != nil {
+
+		return response.Error(
+			c,
+			fiber.StatusUnauthorized,
+			"invalid credentials",
+		)
+	}
+
+	return response.Success(
+		c,
+		fiber.StatusOK,
 		resp,
 	)
 }

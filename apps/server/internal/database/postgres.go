@@ -3,13 +3,16 @@ package database
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/Rifqialba/simplem/apps/server/internal/config"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPostgres(cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
+func NewPostgres(
+	cfg config.DatabaseConfig,
+) (*pgxpool.Pool, error) {
+
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.User,
@@ -20,21 +23,21 @@ func NewPostgres(cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
 		cfg.SSLMode,
 	)
 
-	ctx, cancel := context.WithTimeout(
+	dbpool, err := pgxpool.New(
 		context.Background(),
-		5*time.Second,
+		dsn,
 	)
 
-	defer cancel()
-
-	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := pool.Ping(ctx); err != nil {
+	if err := dbpool.Ping(
+		context.Background(),
+	); err != nil {
+
 		return nil, err
 	}
 
-	return pool, nil
+	return dbpool, nil
 }

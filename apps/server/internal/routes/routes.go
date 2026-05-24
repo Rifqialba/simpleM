@@ -4,9 +4,11 @@ import (
 	"github.com/Rifqialba/simplem/apps/server/internal/app"
 	"github.com/Rifqialba/simplem/apps/server/internal/handler"
 	"github.com/Rifqialba/simplem/apps/server/internal/middleware"
+	"github.com/Rifqialba/simplem/apps/server/internal/realtime"
 	"github.com/Rifqialba/simplem/apps/server/internal/response"
 	"github.com/Rifqialba/simplem/apps/server/internal/user"
 
+	ws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -28,6 +30,13 @@ func Register(
 		appContainer.Config.JWTSecret,
 	)
 
+	realtimeManager := realtime.NewManager()
+
+	realtimeHandler := realtime.NewHandler(
+	realtimeManager,
+	appContainer.Config.JWTSecret,
+)
+
 	appFiber.Post("/users", userHandler.Create)
 
 	appFiber.Post("/login", userHandler.Login)
@@ -45,6 +54,11 @@ func Register(
 				},
 			)
 		},
+	)
+
+	appFiber.Get(
+		"/ws/:roomId",
+		ws.New(realtimeHandler.Handle),
 	)
 
 	appFiber.Get("/panic", func(c *fiber.Ctx) error {

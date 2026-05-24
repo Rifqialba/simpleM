@@ -27,7 +27,14 @@ func (m *Manager) JoinRoom(
 		m.hub.Rooms[roomID] = make(map[*Client]bool)
 	}
 
+	if _, exists := m.hub.Presence[roomID]; !exists {
+
+		m.hub.Presence[roomID] = make(map[string]bool)
+	}
+
 	m.hub.Rooms[roomID][client] = true
+
+	m.hub.Presence[roomID][client.UserID] = true
 }
 
 func (m *Manager) LeaveRoom(
@@ -47,9 +54,31 @@ func (m *Manager) LeaveRoom(
 		client,
 	)
 
+	hasOtherConnections := false
+
+	for c := range m.hub.Rooms[roomID] {
+
+		if c.UserID == client.UserID {
+
+			hasOtherConnections = true
+
+			break
+		}
+	}
+
+	if !hasOtherConnections {
+
+		delete(
+			m.hub.Presence[roomID],
+			client.UserID,
+		)
+	}
+
 	if len(m.hub.Rooms[roomID]) == 0 {
 
 		delete(m.hub.Rooms, roomID)
+
+		delete(m.hub.Presence, roomID)
 	}
 }
 
@@ -85,4 +114,23 @@ func (m *Manager) Broadcast(
 			)
 		}
 	}
+}
+
+func (m *Manager) GetPresence(
+	roomID string,
+) []string {
+
+	m.hub.mu.RLock()
+	defer m.hub.mu.RUnlock()
+
+	users := []string{}
+
+	presence := m.hub.Presence[roomID]
+
+	for userID := range presence {
+
+		users = append(users, userID)
+	}
+
+	return users
 }

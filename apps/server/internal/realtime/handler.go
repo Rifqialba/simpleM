@@ -99,6 +99,15 @@ func (h *Handler) Handle(
 		roomID,
 		client,
 	)
+	h.manager.Broadcast(
+	roomID,
+	Event{
+		Type: EventPresenceUpdate,
+		Payload: map[string]any{
+			"users": h.manager.GetPresence(roomID),
+		},
+	},
+)
 
 	defer func() {
 
@@ -106,6 +115,15 @@ func (h *Handler) Handle(
 			roomID,
 			client,
 		)
+		h.manager.Broadcast(
+	roomID,
+	Event{
+		Type: EventPresenceUpdate,
+		Payload: map[string]any{
+			"users": h.manager.GetPresence(roomID),
+		},
+	},
+)
 
 		h.manager.Broadcast(
 			roomID,
@@ -164,6 +182,12 @@ func (h *Handler) Handle(
 		}
 	}()
 
+	_ = c.WriteJSON(Event{
+	Type: EventPresenceState,
+	Payload: map[string]any{
+		"users": h.manager.GetPresence(roomID),
+	},
+	})
 	for {
 
 		_, msg, err := c.ReadMessage()

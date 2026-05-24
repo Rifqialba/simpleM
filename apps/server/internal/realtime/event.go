@@ -8,6 +8,8 @@ const (
 	EventMessageReceived = "message.received"
 
 	EventPresenceUpdate = "presence.update"
+
+	EventPresenceState = "presence.state"
 )
 
 type Event struct {

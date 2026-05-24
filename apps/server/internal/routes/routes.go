@@ -7,7 +7,9 @@ import (
 	"github.com/Rifqialba/simplem/apps/server/internal/realtime"
 	"github.com/Rifqialba/simplem/apps/server/internal/response"
 	"github.com/Rifqialba/simplem/apps/server/internal/user"
-
+	"github.com/Rifqialba/simplem/apps/server/internal/tab"
+	"github.com/Rifqialba/simplem/apps/server/internal/workspace"
+	"github.com/Rifqialba/simplem/apps/server/internal/room"
 	ws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,12 +32,30 @@ func Register(
 		appContainer.Config.JWTSecret,
 	)
 
+	tabRepo := tab.NewRepository(appContainer.DB)
+
+	tabService := tab.NewService(tabRepo)
+
+	tabHandler := tab.NewHandler(tabService)
+
 	realtimeManager := realtime.NewManager()
+
+	workspaceRepo := workspace.NewRepository(appContainer.DB)
+
+	workspaceService := workspace.NewService(workspaceRepo)
+
+	workspaceHandler := workspace.NewHandler(workspaceService)
+
+	roomRepo := room.NewRepository(appContainer.DB)
+
+	roomService := room.NewService(roomRepo)
+
+	roomHandler := room.NewHandler(roomService)
 
 	realtimeHandler := realtime.NewHandler(
 	realtimeManager,
 	appContainer.Config.JWTSecret,
-)
+	)
 
 	appFiber.Post("/users", userHandler.Create)
 
@@ -64,4 +84,34 @@ func Register(
 	appFiber.Get("/panic", func(c *fiber.Ctx) error {
 		panic("test panic")
 	})
+
+	appFiber.Post(
+	"/rooms/:roomId/tabs",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	tabHandler.Create,
+	)
+
+	appFiber.Get(
+	"/rooms/:roomId/tabs",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	tabHandler.ListByRoomID,
+	)
+
+	appFiber.Put(
+	"/rooms/:roomId/tabs/:tabId/activate",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	tabHandler.Activate,
+	)
+
+	appFiber.Post(
+	"/workspaces",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	workspaceHandler.Create,
+	)
+
+    appFiber.Post(
+	"/workspaces/:workspaceId/rooms",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	roomHandler.Create,
+	)
 }

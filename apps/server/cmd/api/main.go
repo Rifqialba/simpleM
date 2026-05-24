@@ -42,7 +42,7 @@ func main() {
 		Redis:  redisClient,
 	}
 
-	appFiber := server.New()
+	appFiber := server.New(appContainer)
 
 	routes.Register(
 		appFiber,

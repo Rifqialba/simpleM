@@ -23,4 +23,8 @@ func Register(
 	userHandler := user.NewHandler(userService)
 
 	appFiber.Post("/users", userHandler.Create)
+	
+	appFiber.Get("/panic", func(c *fiber.Ctx) error {
+	panic("test panic")
+})
 }

@@ -1,6 +1,8 @@
 package user
 
 import (
+	"github.com/Rifqialba/simplem/apps/server/internal/response"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -18,10 +20,11 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	var req CreateUserRequest
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": "invalid request body",
-			},
+
+		return response.Error(
+			c,
+			fiber.StatusBadRequest,
+			"invalid request body",
 		)
 	}
 
@@ -31,14 +34,15 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
+
+		return response.Error(
+			c,
+			fiber.StatusBadRequest,
+			err.Error(),
 		)
 	}
 
-	response := UserResponse{
+	resp := UserResponse{
 		ID:          user.ID,
 		Email:       user.Email,
 		Username:    user.Username,
@@ -47,7 +51,9 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 		IsActive:    user.IsActive,
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(
-		response,
+	return response.Success(
+		c,
+		fiber.StatusCreated,
+		resp,
 	)
 }

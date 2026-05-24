@@ -7,7 +7,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Rifqialba/simplem/apps/server/internal/app"
+	"github.com/Rifqialba/simplem/apps/server/internal/cache"
 	"github.com/Rifqialba/simplem/apps/server/internal/config"
+	"github.com/Rifqialba/simplem/apps/server/internal/database"
 	"github.com/Rifqialba/simplem/apps/server/internal/logger"
 	"github.com/Rifqialba/simplem/apps/server/internal/routes"
 	"github.com/Rifqialba/simplem/apps/server/internal/server"
@@ -18,16 +21,42 @@ func main() {
 
 	logg := logger.New()
 
-	app := server.New()
+	db, err := database.NewPostgres(cfg.Database)
+	if err != nil {
+		logg.Fatal().
+			Err(err).
+			Msg("failed to connect postgres")
+	}
 
-	routes.Register(app)
+	redisClient, err := cache.NewRedis(cfg.Redis)
+	if err != nil {
+		logg.Fatal().
+			Err(err).
+			Msg("failed to connect redis")
+	}
+
+	appContainer := &app.App{
+		Config: cfg,
+		Logger: logg,
+		DB:     db,
+		Redis:  redisClient,
+	}
+
+	appFiber := server.New()
+
+	routes.Register(
+		appFiber,
+		appContainer,
+	)
 
 	go func() {
 		logg.Info().
-			Str("port", cfg.AppPort).
+			Str("port", cfg.App.Port).
 			Msg("starting simpleM server")
 
-		if err := app.Listen(":" + cfg.AppPort); err != nil {
+		if err := appFiber.Listen(
+			":" + cfg.App.Port,
+		); err != nil {
 			logg.Fatal().
 				Err(err).
 				Msg("failed to start server")
@@ -53,10 +82,18 @@ func main() {
 
 	defer cancel()
 
-	if err := app.ShutdownWithContext(ctx); err != nil {
+	if err := appFiber.ShutdownWithContext(ctx); err != nil {
 		logg.Error().
 			Err(err).
 			Msg("graceful shutdown failed")
+	}
+
+	db.Close()
+
+	if err := redisClient.Close(); err != nil {
+		logg.Error().
+			Err(err).
+			Msg("failed closing redis")
 	}
 
 	logg.Info().Msg("server stopped")

@@ -1,13 +1,22 @@
 package realtime
 
 import (
+	"encoding/json"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gofiber/contrib/websocket"
 )
+
+type ClientMessage struct {
+	Type string `json:"type"`
+
+	Payload any `json:"payload"`
+}
 
 type Handler struct {
 	manager *Manager
@@ -22,6 +31,7 @@ func NewHandler(
 
 	return &Handler{
 		manager: manager,
+
 		jwtSecret: jwtSecret,
 	}
 }
@@ -89,25 +99,29 @@ func (h *Handler) Handle(
 	}
 
 	client := &Client{
-		ID:     userID + ":" + roomID,
+		ID: userID + ":" + roomID,
+
 		UserID: userID,
+
 		RoomID: roomID,
-		Conn:   c,
+
+		Conn: c,
 	}
 
 	h.manager.JoinRoom(
 		roomID,
 		client,
 	)
+
 	h.manager.Broadcast(
-	roomID,
-	Event{
-		Type: EventPresenceUpdate,
-		Payload: map[string]any{
-			"users": h.manager.GetPresence(roomID),
+		roomID,
+		Event{
+			Type: EventPresenceUpdate,
+			Payload: map[string]any{
+				"users": h.manager.GetPresence(roomID),
+			},
 		},
-	},
-)
+	)
 
 	defer func() {
 
@@ -115,15 +129,16 @@ func (h *Handler) Handle(
 			roomID,
 			client,
 		)
+
 		h.manager.Broadcast(
-	roomID,
-	Event{
-		Type: EventPresenceUpdate,
-		Payload: map[string]any{
-			"users": h.manager.GetPresence(roomID),
-		},
-	},
-)
+			roomID,
+			Event{
+				Type: EventPresenceUpdate,
+				Payload: map[string]any{
+					"users": h.manager.GetPresence(roomID),
+				},
+			},
+		)
 
 		h.manager.Broadcast(
 			roomID,
@@ -183,29 +198,56 @@ func (h *Handler) Handle(
 	}()
 
 	_ = c.WriteJSON(Event{
-	Type: EventPresenceState,
-	Payload: map[string]any{
-		"users": h.manager.GetPresence(roomID),
-	},
+		Type: EventPresenceState,
+		Payload: map[string]any{
+			"users": h.manager.GetPresence(roomID),
+		},
 	})
+
 	for {
 
-		_, msg, err := c.ReadMessage()
+		_, messageBytes, err := c.ReadMessage()
 
 		if err != nil {
 			log.Println(err)
 			break
 		}
 
-		h.manager.Broadcast(
-			roomID,
-			Event{
-				Type: EventMessageReceived,
-				Payload: map[string]any{
-					"user_id": userID,
-					"message": string(msg),
-				},
-			},
+		var message ClientMessage
+
+		err = json.Unmarshal(
+			messageBytes,
+			&message,
 		)
+
+		if err != nil {
+			continue
+		}
+
+		switch message.Type {
+
+		case "whiteboard.update":
+
+			h.manager.Broadcast(
+				roomID,
+				Event{
+					Type: EventWhiteboardUpdated,
+					Payload: message.Payload,
+				},
+			)
+
+		default:
+
+			h.manager.Broadcast(
+				roomID,
+				Event{
+					Type: EventMessageReceived,
+					Payload: fiber.Map{
+						"user_id": userID,
+						"message": string(messageBytes),
+					},
+				},
+			)
+		}
 	}
 }

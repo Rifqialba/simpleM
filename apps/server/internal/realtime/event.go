@@ -14,6 +14,8 @@ const (
 	EventTabCreated = "tab.created"
 
 	EventTabActivated = "tab.activated"
+
+	EventWhiteboardUpdated = "whiteboard.updated"
 )
 
 type Event struct {

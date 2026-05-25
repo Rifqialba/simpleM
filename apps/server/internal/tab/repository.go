@@ -20,12 +20,36 @@ func NewRepository(
 	}
 }
 
+func (r *Repository) GetNextPosition(
+	ctx context.Context,
+	roomID string,
+) (int, error) {
+
+	query := `
+		SELECT COALESCE(MAX(position), 0) + 1
+		FROM room_tabs
+		WHERE room_id = $1
+	`
+
+	var position int
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		roomID,
+	).Scan(&position)
+
+	return position, err
+}
+
 func (r *Repository) Create(
 	ctx context.Context,
 	tab *Tab,
 ) error {
 
-	metadata, err := json.Marshal(tab.Metadata)
+	metadataBytes, err := json.Marshal(
+		tab.Metadata,
+	)
 
 	if err != nil {
 		return err
@@ -57,7 +81,7 @@ func (r *Repository) Create(
 		tab.Title,
 		tab.Position,
 		tab.IsActive,
-		metadata,
+		metadataBytes,
 	).Scan(
 		&tab.ID,
 		&tab.CreatedAt,
@@ -79,6 +103,7 @@ func (r *Repository) ListByRoomID(
 			title,
 			position,
 			is_active,
+			metadata,
 			created_at,
 			updated_at
 		FROM room_tabs
@@ -104,6 +129,8 @@ func (r *Repository) ListByRoomID(
 
 		var tab Tab
 
+		var metadataBytes []byte
+
 		err := rows.Scan(
 			&tab.ID,
 			&tab.RoomID,
@@ -112,6 +139,7 @@ func (r *Repository) ListByRoomID(
 			&tab.Title,
 			&tab.Position,
 			&tab.IsActive,
+			&metadataBytes,
 			&tab.CreatedAt,
 			&tab.UpdatedAt,
 		)
@@ -120,7 +148,22 @@ func (r *Repository) ListByRoomID(
 			return nil, err
 		}
 
-		tabs = append(tabs, tab)
+		if metadataBytes != nil {
+
+			err = json.Unmarshal(
+				metadataBytes,
+				&tab.Metadata,
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		tabs = append(
+			tabs,
+			tab,
+		)
 	}
 
 	return tabs, nil

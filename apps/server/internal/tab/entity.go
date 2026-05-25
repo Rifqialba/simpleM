@@ -3,23 +3,23 @@ package tab
 import "time"
 
 type Tab struct {
-	ID string
+	ID string `json:"id"`
 
-	RoomID string
+	RoomID string `json:"room_id"`
 
-	CreatedBy string
+	CreatedBy string `json:"created_by"`
 
-	Type string
+	Type string `json:"type"`
 
-	Title string
+	Title string `json:"title"`
 
-	Position int
+	Position int `json:"position"`
 
-	IsActive bool
+	IsActive bool `json:"is_active"`
 
-	Metadata map[string]any
+	Metadata map[string]any `json:"metadata"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `json:"updated_at"`
 }

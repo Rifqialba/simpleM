@@ -2,6 +2,8 @@ package tab
 
 import (
 	"context"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type Service struct {
@@ -17,12 +19,49 @@ func NewService(
 	}
 }
 
+func isValidTabType(
+	tabType string,
+) bool {
+
+	switch tabType {
+
+	case TypeWhiteboard:
+		return true
+
+	case TypeMarkdown:
+		return true
+
+	case TypePresentation:
+		return true
+
+	default:
+		return false
+	}
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	roomID string,
 	userID string,
 	req CreateTabRequest,
 ) (*Tab, error) {
+
+	if !isValidTabType(req.Type) {
+
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"invalid tab type",
+		)
+	}
+
+	position, err := s.repo.GetNextPosition(
+		ctx,
+		roomID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	tab := &Tab{
 		RoomID: roomID,
@@ -33,14 +72,14 @@ func (s *Service) Create(
 
 		Title: req.Title,
 
-		Position: 0,
+		Position: position,
 
 		IsActive: false,
 
 		Metadata: map[string]any{},
 	}
 
-	err := s.repo.Create(
+	err = s.repo.Create(
 		ctx,
 		tab,
 	)
@@ -68,6 +107,10 @@ func (s *Service) ActivateTab(
 	roomID string,
 	tabID string,
 ) error {
+
+	// TODO:
+	// wrap active tab updates in transaction
+	// to avoid race conditions
 
 	err := s.repo.ClearActiveTabs(
 		ctx,

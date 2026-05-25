@@ -3,19 +3,19 @@ package room
 import "time"
 
 type Room struct {
-	ID string
+	ID string `json:"id"`
 
-	WorkspaceID string
+	WorkspaceID string `json:"workspace_id"`
 
-	CreatedBy string
+	CreatedBy string `json:"created_by"`
 
-	Name string
+	Name string `json:"name"`
 
-	Description *string
+	Description *string `json:"description"`
 
-	IsArchived bool
+	IsArchived bool `json:"is_archived"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `json:"updated_at"`
 }

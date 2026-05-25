@@ -3,21 +3,21 @@ package user
 import "time"
 
 type User struct {
-	ID string
+	ID string `json:"id"`
 
-	Email string
+	Email string `json:"email"`
 
-	PasswordHash string
+	PasswordHash string `json:"password_hash"`
 
-	Username string
+	Username string `json:"username"`
 
-	DisplayName string
+	DisplayName string `json:"display_name"`
 
-	AvatarURL *string
+	AvatarURL *string `json:"avatar_url"`
 
-	IsActive bool
+	IsActive bool `json:"is_active"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `json:"updated_at"`
 }

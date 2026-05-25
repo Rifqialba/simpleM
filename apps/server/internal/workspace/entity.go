@@ -3,19 +3,19 @@ package workspace
 import "time"
 
 type Workspace struct {
-	ID string
+	ID string `json:"id"`
 
-	OwnerID string
+	OwnerID string `json:"owner_id"`
 
-	Name string
+	Name string `json:"name"`
 
-	Slug string
+	Slug string `json:"slug"`
 
-	Description *string
+	Description *string `json:"description"`
 
-	IsPersonal bool
+	IsPersonal bool `json:"is_personal"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `json:"updated_at"`
 }

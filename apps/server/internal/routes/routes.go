@@ -9,6 +9,7 @@ import (
 	"github.com/Rifqialba/simplem/apps/server/internal/user"
 	"github.com/Rifqialba/simplem/apps/server/internal/tab"
 	"github.com/Rifqialba/simplem/apps/server/internal/workspace"
+	"github.com/Rifqialba/simplem/apps/server/internal/whiteboard"
 	"github.com/Rifqialba/simplem/apps/server/internal/room"
 	ws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -39,9 +40,17 @@ func Register(
 	tabHandler := tab.NewHandler(
 	tabService,
 	appContainer.RealtimeManager,
-)
+	)
 
+	whiteboardRepo := whiteboard.NewRepository(appContainer.DB)
 
+	whiteboardService := whiteboard.NewService(
+	whiteboardRepo,
+	)
+
+	whiteboardHandler := whiteboard.NewHandler(
+	whiteboardService,
+	)
 	workspaceRepo := workspace.NewRepository(appContainer.DB)
 
 	workspaceService := workspace.NewService(workspaceRepo)
@@ -57,6 +66,8 @@ func Register(
 	realtimeHandler := realtime.NewHandler(
 	appContainer.RealtimeManager,
 	appContainer.Config.JWTSecret,
+
+
 )
 
 	appFiber.Post("/users", userHandler.Create)
@@ -115,5 +126,17 @@ func Register(
 	"/workspaces/:workspaceId/rooms",
 	middleware.Auth(appContainer.Config.JWTSecret),
 	roomHandler.Create,
+	)
+
+	appFiber.Post(
+	"/tabs/:tabId/whiteboard",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	whiteboardHandler.Save,
+	)
+
+	appFiber.Get(
+	"/tabs/:tabId/whiteboard",
+	middleware.Auth(appContainer.Config.JWTSecret),
+	whiteboardHandler.FindByTabID,
 	)
 }

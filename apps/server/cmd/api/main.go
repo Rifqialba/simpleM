@@ -14,6 +14,7 @@ import (
 	"github.com/Rifqialba/simplem/apps/server/internal/logger"
 	"github.com/Rifqialba/simplem/apps/server/internal/routes"
 	"github.com/Rifqialba/simplem/apps/server/internal/server"
+	"github.com/Rifqialba/simplem/apps/server/internal/realtime"
 )
 
 func main() {
@@ -40,6 +41,7 @@ func main() {
 		Logger: logg,
 		DB:     db,
 		Redis:  redisClient,
+		RealtimeManager: realtime.NewManager(),
 	}
 
 	appFiber := server.New(appContainer)

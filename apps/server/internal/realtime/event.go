@@ -10,6 +10,10 @@ const (
 	EventPresenceUpdate = "presence.update"
 
 	EventPresenceState = "presence.state"
+
+	EventTabCreated = "tab.created"
+
+	EventTabActivated = "tab.activated"
 )
 
 type Event struct {

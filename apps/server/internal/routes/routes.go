@@ -36,9 +36,11 @@ func Register(
 
 	tabService := tab.NewService(tabRepo)
 
-	tabHandler := tab.NewHandler(tabService)
+	tabHandler := tab.NewHandler(
+	tabService,
+	appContainer.RealtimeManager,
+)
 
-	realtimeManager := realtime.NewManager()
 
 	workspaceRepo := workspace.NewRepository(appContainer.DB)
 
@@ -53,9 +55,9 @@ func Register(
 	roomHandler := room.NewHandler(roomService)
 
 	realtimeHandler := realtime.NewHandler(
-	realtimeManager,
+	appContainer.RealtimeManager,
 	appContainer.Config.JWTSecret,
-	)
+)
 
 	appFiber.Post("/users", userHandler.Create)
 

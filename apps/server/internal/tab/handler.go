@@ -1,6 +1,7 @@
 package tab
 
 import (
+	"github.com/Rifqialba/simplem/apps/server/internal/realtime"
 	"github.com/Rifqialba/simplem/apps/server/internal/response"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,14 +9,19 @@ import (
 
 type Handler struct {
 	service *Service
+
+	realtimeManager *realtime.Manager
 }
 
 func NewHandler(
 	service *Service,
+	realtimeManager *realtime.Manager,
 ) *Handler {
 
 	return &Handler{
 		service: service,
+
+		realtimeManager: realtimeManager,
 	}
 }
 
@@ -53,6 +59,14 @@ func (h *Handler) Create(
 			err.Error(),
 		)
 	}
+
+	h.realtimeManager.Broadcast(
+		roomID,
+		realtime.Event{
+			Type: realtime.EventTabCreated,
+			Payload: tab,
+		},
+	)
 
 	return response.Success(
 		c,
@@ -110,6 +124,16 @@ func (h *Handler) Activate(
 			err.Error(),
 		)
 	}
+
+	h.realtimeManager.Broadcast(
+		roomID,
+		realtime.Event{
+			Type: realtime.EventTabActivated,
+			Payload: fiber.Map{
+				"tab_id": tabID,
+			},
+		},
+	)
 
 	return response.Success(
 		c,

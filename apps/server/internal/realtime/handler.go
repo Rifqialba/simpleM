@@ -43,6 +43,18 @@ func (h *Handler) Handle(
 	roomID := c.Params("roomId")
 
 	authHeader := c.Headers("Authorization")
+	
+
+if authHeader == "" {
+
+	tokenQuery := c.Query("token")
+
+	if tokenQuery != "" {
+
+		authHeader =
+			"Bearer " + tokenQuery
+	}
+}
 
 	if authHeader == "" {
 

@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/Rifqialba/simplem/apps/server/internal/app"
 	"github.com/Rifqialba/simplem/apps/server/internal/middleware"
-
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,6 +12,8 @@ func New(
 ) *fiber.App {
 
 	app := fiber.New()
+
+	app.Use(cors.New())
 
 	app.Use(middleware.Recover())
 
